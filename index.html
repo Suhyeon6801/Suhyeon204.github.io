@@ -1,0 +1,460 @@
+<html>
+<head>
+    <title>MyCalculation</title>
+    <style type="text/css">
+        body {
+            margin: 0px 0px 0px 0px;
+        }
+
+        h1 {
+            font-family: "Avant Garde", Avantgarde, "Century Gothic", CenturyGothic, "AppleGothic", fantasy;
+            font-size: 20px;
+            padding: 10px 10px;
+            text-align: center;
+            text-transform: uppercase;
+            text-rendering: optimizeLegibility;
+            color: #050400;
+            background-color: #fcfcf8;
+            letter-spacing: .1em;
+        }
+
+        #calculator {
+            font-size: 0;
+            width: 400px;
+            background:linear-gradient(#c9d6ff,#e2e2e2) fixed;
+            padding: 20px;
+            margin: auto;
+            border-radius: 10px;
+        }
+
+        #resultbox {
+            width: 385px;
+            height: 250px;
+            margin-bottom: 15px;
+            padding: 20px 5px 0px 5px;
+            background-color:#dee9f7;
+            border-radius: 5px;
+            /*display: inline-flex;*/
+            /*justify-content: flex-start;*/
+            text-align:left;
+            align-items:flex-end;
+            overflow: auto;
+            box-shadow: inset 0 0px 3px;
+            font: 25px digital;
+        }
+
+        .key{
+            width: 35px;
+            height: 25px;
+            background-color: #ffffff;
+            display: inline-flex;
+            margin: 3px 5px 8px 0px;
+            vertical-align: middle;
+            justify-content: center;
+            align-items: center;
+            padding: 5px 0px 5px 0px;
+            border-radius: 4px;
+            cursor: pointer;
+            font: bold 20px sans-serif;
+        }
+
+        .number-key{
+            width: 35px;
+            height:25px;
+            background-color:#fffcdc;
+            display: inline-flex;
+            margin:3px 5px 8px 0px;
+            justify-content: center;
+            align-items:center;
+            padding: 5px 0px 5px 0px;
+            border-radius: 4px;
+            cursor: pointer;
+            font: bold 20px sans-serif;
+        }
+
+        .symbol-key {
+            width: 35px;
+            height: 25px;
+            background-color: #ffffff;
+            display: inline-flex;
+            margin: 3px 5px 8px 0px;
+            vertical-align: middle;
+            justify-content: center;
+            align-items: center;
+            padding: 5px 0px 5px 0px;
+            border-radius: 4px;
+            cursor: pointer;
+            font:Helvetica 15px "sans-serif"
+        }
+
+        .forfunction-key {
+            width: 35px;
+            height: 25px;
+            background-color:#d9a7c7;
+            display: inline-flex;
+            margin: 3px 5px 8px 0px;
+            vertical-align: middle;
+            justify-content: center;
+            align-items: center;
+            padding: 5px 0px 5px 0px;
+            border-radius: 4px;
+            cursor: pointer;
+            font: Helvetica 15px SansSerif;
+
+            display:none;
+        }
+
+        .backspace-key{
+            background-color:#49b39d;
+            color:black;
+            font: Helvetica 20px "sans-serif";
+        }
+
+        .eval-key {
+            width:75px;
+            background-color:#f05053;
+            color: black;
+            font:Helvetica 20px "sans-serif";
+        }
+
+        .clear-key {
+            background-color:#49b39d;
+            color: Black;
+        }
+
+        .key:active {
+            background-color: #a1a1a1;
+            box-shadow: 0 5px #666;
+            transform: translateY(4px);
+        }
+
+        .select-key{
+            background-color:#ffc3a0;
+            font: Helvetica 13px "sans-serif";
+            width: 115px;
+        }
+
+        .cmp-key{
+            display:none;
+        }
+
+        .space-two{
+            width:75px;
+        }
+
+        .matrix-key{
+            background-color:#fbc7d4;
+            width:75px;
+            font-size:13px;
+        }
+
+        .vec-key{
+            background-color:#9796f0;
+            width:75px;
+            font-size:13px;
+
+        }
+
+        .graph-key{
+            width: 35px;
+            height: 25px;
+            background-color:#ffafbd;
+            display: inline-flex;
+            margin: 3px 5px 8px 0px;
+            vertical-align: middle;
+            justify-content: center;
+            align-items: center;
+            padding: 5px 0px 5px 0px;
+            border-radius: 4px;
+            cursor: pointer;
+            font: bold 13px sans-serif;
+        }
+
+        .space-three {
+            width:115px
+        }
+    </style>
+
+    <script src='js/jquery.min.js' type='text/javascript'></script>
+    <script src='js/math.js' type='text/javascript'></script>
+    <script src='js/plotly-latest.min.js' type='text/javascript'></script>
+
+    <script type="text/javascript">
+
+        //그래프 그리는 범위 나타내는 변수
+        graph_xmin=-10; //x축 최소값
+        graph_xmax = 10; //x축 최대값
+        graph_ymin = -10; //y축 최소값
+        graph_ymax = 10; //y축 최대값
+        myExp=[]; //수식 compile 한 결과
+        myExpText=[]; //수식 원본
+
+        //drawGraph()
+        //전역변수 myExp에 들어있는 수식에 따라 그래프를 그리는 함수이다.
+        function drawGraph(){
+            myTrace= [];
+            for(i=0;i<myExp.length;i++) { //각 수식별로 for를 돌면서
+                var xValues = math.range(graph_xmin*2, graph_xmax*2, 0.01).toArray(); //0.01간격으로 x값을 만든 다음 (넉넉하게 표현하기 위해 그리는 영역의 2배만큼 해를 설정한다)
+                var yValues = xValues.map(function (x) { //수식에 대입하여 y값을 계산한다.
+                    return myExp[i].eval({x: x});
+                });
+                var trace = { //이를 이용하여 해를 만들고
+                    x:xValues,
+                    y:yValues,
+                    name:myExpText[i],
+                    mode:'lines'
+                };
+                myTrace.push(trace); //해들을 myTrace array에 넣는다.
+            }
+            var layout = { //그래프 레이아웃 정의
+                xaxis: {
+                    range: [graph_xmin, graph_xmax], //x축 범위
+                    autorange: false
+                },
+                yaxis: {
+                    range: [graph_ymin, graph_ymax], //y축 범위
+                    autorange: false
+                },
+                showlegend :true, //범례 표시
+                margin : {t:20, b:20,r:20,l:20}, //그래프 상하좌우 여백 20px
+                paper_bgcolor : "#bbddf1", 
+                plot_bgcolor : "#bbddf1"
+
+            };
+            graph_area = document.getElementById('graph');
+            Plotly.newPlot(graph_area, myTrace, layout); //그래프 추가
+        }
+
+
+        $(document).ready(function () {
+            drawGraph();
+
+            var parser = math.parser();
+            var displayValue = '0';
+            $('#result').text(displayValue);
+
+            $('.key').each(function (index, key) {
+                $(this).click(function (e) {
+
+                    if (displayValue == '0') displayValue = '';
+
+                    if ($(this).text() == '<-') { //백스페이스 버튼
+                        if ($('#result').text() == '0') //현재값이 0이면 아무것도 안한다.
+                            return;
+
+                        var word = $('#result').text();
+
+                        if (word.substring(0, word.length - 1)==""){ //백스페이스 결과가 아무것도 없는 경우 (숫자 한자리 등) 0으로 결과 수정
+                            $('#result').text('0');
+                            return;
+                        }
+
+                        word = word.substring(0, word.length - 1);
+                        $('#result').text(word);
+                        displayValue = word;
+                    }
+                    else if ($(this).text() == 'result') {
+                        try {
+                            displayValue = parser.eval(displayValue).toString();
+                            var tokens = displayValue.split(' ');
+                            if (tokens[0] == 'function') {
+                                displayValue = tokens[0];
+                            }
+                            $('#result').text(displayValue);
+                            displayValue = '0';
+                        }
+                        catch (e) {
+                            displayValue = '0';
+                            if (displayValue != 'function') {
+                                $('#result').text(e);
+                            }
+                        }
+                    }
+                    else if ($(this).text() == 'func'){ //func 키 누르면 cmp와 func 사라지고 사용자 정의 함수 버튼 생성
+                        $('.forfunction-key').css('display','inline-flex');
+                        $('.select-key').css('display','none');
+                    }
+                    else if($(this).text() == 'cmp'){ //cmp 키 누르면 cmp와 func 사라지고 비교함수버튼 생성
+                        $('.cmp-key').css('display','inline-flex');
+                        $('.select-key').css('display','none');
+                    }
+                    else {
+                        if ($(this).text() == 'CE') {
+                            displayValue = '0';
+                            $('#result').text(displayValue);
+                            $('.forfunction-key').css('display','none'); //비교함수랑 function 버튼 보이게 함.
+                            $('.cmp-key').css('display','none');
+                            $('.select-key').css('display','inline-flex');
+                        }
+                        else {
+                            displayValue += $(this).text();
+                            $('#result').text(displayValue);
+                        }
+                        try {
+                            var node = math.parse(displayValue);
+                        }
+                        catch(e){
+                        }
+                        // MathJax.Hub.Queue(['Text', elem, latex]);
+                    }
+
+                    e.preventDefault();
+                });
+            });
+
+
+            $('.forfunction-key').each(function (index, key) { //사용자 정의 함수 누르면 다시 기본상태인 func cmp 나오게
+                $(this).click(function (e) {
+                    $('.forfunction-key').css('display','none');
+                    $('.select-key').css('display','inline-flex');
+                    e.preventDefault();
+                });
+            });
+            $('.cmp-key').each(function (index, key) { //비교함수 누르면 다시 기본상태인 func cmp 나오게 세팅
+                $(this).click(function (e) {
+                    $('.cmp-key').css('display','none');
+                    $('.select-key').css('display','inline-flex');
+                    e.preventDefault();
+                });
+            });
+
+            $('.graph-key').each(function(index,key){ //그래프와 관련된 버튼 입력시
+                $(this).click(function (e) {
+
+                    if ($(this).text() == 'draw') { //draw 누르면 현재 수식 myExp에 넣고 그래프 생성
+
+                        var expr = math.compile($('#result').text());
+                        myExp.push(expr);
+                        myExpText.push($('#result').text());
+                        drawGraph();
+                    }
+                    else if ($(this).text() == 'clear'){ //clear시 myExp 초기화하고 그래프 생성
+                        myExp = [];
+                        myExpText = [];
+                        drawGraph();
+                    }
+                    else { //그래프에서 그릴 x범위 y범위 확장 또는 축소
+                        if ($(this).text() == 'x++'){
+                            graph_xmax++;
+                            graph_xmin--;
+                        }
+                        else if ($(this).text() == 'x--'){
+                            graph_xmin++;
+                            graph_xmax--;
+
+                        }
+                        else if ($(this).text() == 'y++'){
+                            graph_ymax++;
+                            graph_ymin--;
+                        }
+                        else if ($(this).text() == 'y--'){
+                            graph_ymax--;
+                            graph_ymin++;
+                        }
+                        drawGraph();
+                    }
+                    });
+                });
+            });
+
+    </script>
+</head>
+
+<body>
+<h1>
+    MY CALCULATION
+</h1>
+
+
+
+<div id="calculator">
+    <div id="resultbox">
+    <div id="result">
+
+
+    </div>
+        <div id="graph" style="width:385px;height:200px;"></div>
+    </div>
+    <span class="key">%</span>
+    <span class="key">^</span>
+
+    <span class="key symbol-key">exp</span>
+    <span class="key symbol-key">log</span>
+    <span class="key symbol-key">sqrt</span>
+    <span class="key symbol-key">sin</span>
+    <span class="key symbol-key">cos</span>
+    <span class="key symbol-key">tan</span>
+    <span class="key symbol-key">i</span>
+    <span class="key symbol-key">e</span>
+    <span class="key symbol-key">pi</span>
+    <span class="key symbol-key">!</span>
+
+
+    <span class="key">(</span>
+    <span class="key">)</span>
+    <span class="key">[</span>
+    <span class="key">]</span>
+    <span class="key">.</span>
+    <span class="key">,</span>
+    <span class="key">:</span>
+    <span class="key">;</span>
+
+    <span class="key vec-key">dot</span>
+    <span class="key vec-key">cross</span>
+
+    <span class="key matrix-key">multiply</span>
+    <span class="key matrix-key">inv</span>
+    <span class="key matrix-key">det</span>
+
+    <span class="key space-two">+</span>
+    <span class="key space-two">-</span>
+    <span class="key space-two">*</span>
+    <span class="key space-two">/</span>
+    <span class="key backspace-key space-two"><-</span>
+
+
+    <span class="key select-key">func</span>
+
+
+    <span class="key forfunction-key">x</span>
+    <span class="key forfunction-key">y</span>
+    <span class="key forfunction-key">z</span>
+    <span class="key cmp-key"><</span>
+    <span class="key cmp-key">></span>
+    <span class="key cmp-key"><=</span>
+
+    <span class="key number-key">1</span>
+    <span class="key number-key">2</span>
+    <span class="key number-key">3</span>
+    <span class="key number-key">4</span>
+    <span class="key number-key">5</span>
+    <span class="key clear-key space-two">CE</span>
+
+    <span class="key select-key">cmp</span>
+    <span class="key forfunction-key">f</span>
+    <span class="key forfunction-key">g</span>
+    <span class="key forfunction-key">=</span>
+    <span class="key cmp-key">>=</span>
+    <span class="key cmp-key">==</span>
+    <span class="key cmp-key">!=</span>
+
+    <span class="key number-key">6</span>
+    <span class="key number-key">7</span>
+    <span class="key number-key">8</span>
+    <span class="key number-key">9</span>
+    <span class="key number-key">0</span>
+    <span class="key eval-key">result</span>
+
+    <span class="graph-key">x++</span>
+    <span class="graph-key">x--</span>
+    <span class="graph-key">y++</span>
+    <span class="graph-key">y--</span>
+
+
+    <span class="graph-key space-three">draw</span>
+    <span class="graph-key space-three">clear</span>
+
+</div>
+
+</body>
+</html>
